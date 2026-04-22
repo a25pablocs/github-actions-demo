@@ -1,34 +1,45 @@
+name: Executable Python
 
-name: Python Tests
-
-
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-
+on: push
 
 jobs:
   test:
     runs-on: ubuntu-latest
 
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: test_script
+        run: python -m unittest test_utils.py
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    if: success()
 
     steps:
-      - name: Checkout repositorio
-        uses: actions/checkout@v3
+      - name: Checkout Code
+        uses: actions/checkout@v6
 
-
-      - name: Configurar Python
-        uses: actions/setup-python@v4
+      - name: Setup Python
+        uses: actions/setup-python@v6
         with:
-          python-version: '3.11'
-
-
-      - name: Instalar dependencias
+          python-version: "3.13"
+      - name: Build release distributions
         run: |
-          python -m pip install --upgrade pip
+          # Instala o paquete que nos permite empaquetar o paquete
+          pip install pyinstaller 
+          # Realiza o empaquetado. O executable crease no directorio dist co nome main
+          pyinstaller --onefile main.py
 
-      - name: Executar tests
-        run: |
-          python -m unittest discover
+      - name: Gardar o executable como artefacto
+        uses: actions/upload-artifact@v6
+        with:
+          name: executable
+          path: dist/main
